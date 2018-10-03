@@ -41,6 +41,8 @@ test_swift_proxy_group: "{{ ((groups['swift_proxy'] is defined) and (groups['swi
 test_gnocchi_group: "{{ ((groups['gnocchi_all'] is defined) and (groups['gnocchi_all'] | length > 0)) | ternary('gnocchi_all', 'all_containers') }}"
 test_ironic_api_group: "{{ ((groups['ironic_api'] is defined) and (groups['ironic_api'] | length > 0)) | ternary('ironic_api', 'all_containers') }}"
 test_cinder_api_group: "{{ ((groups['cinder_api'] is defined) and (groups['cinder_api'] | length > 0)) | ternary('cinder_api', 'all_containers') }}"
+test_manila_api_group: "{{ ((groups['manila_api'] is defined) and (groups['manila_api'] | length > 0)) | ternary('manila_api', 'all_containers') }}"
+test_manila_share_group: "{{ ((groups['manila_share'] is defined) and (groups['manila_share'] | length > 0)) | ternary('manila_share', 'all_containers') }}"
 test_galera_host: "{{ hostvars[groups[test_galera_group][0]]['ansible_host'] }}"
 test_rabbitmq_host: "{{ hostvars[groups[test_rabbitmq_group][0]]['ansible_host'] }}"
 test_memcached_host: "{{ hostvars[groups[test_memcached_group][0]]['ansible_host'] }}"
@@ -55,6 +57,8 @@ test_swift_proxy_host: "{{ hostvars[groups[test_swift_proxy_group][0]]['ansible_
 test_gnocchi_api_host: "{{ hostvars[groups[test_gnocchi_group][0]]['ansible_host'] }}"
 test_ironic_api_host: "{{ hostvars[groups[test_ironic_api_group][0]]['ansible_host'] }}"
 test_cinder_api_host: "{{ hostvars[groups[test_cinder_api_group][0]]['ansible_host'] }}"
+test_manila_api_host: "{{ hostvars[groups[test_manila_api_group][0]]['ansible_host'] }}"
+test_manila_share_host: "{{ hostvars[groups[test_manila_share_group][0]]['ansible_host'] }}"
 
 ## LXC container default bind mounts
 lxc_container_default_bind_mounts:
@@ -261,6 +265,41 @@ cinder_backends:
     volume_backend_name: LVM_iSCSI
 cinder_default_volume_type: lvm
 
+# Manila specific settings
+manila_container_mysql_password: "SuperSecrete"
+manila_developer_mode: true
+manila_git_install_branch: "{{ test_branch }}"
+manila_profiler_hmac_key: "secrete"
+manila_oslomsg_rpc_password: "{{ oslomsg_rpc_password }}"
+manila_oslomsg_notify_password: "{{ oslomsg_notify_password }}"
+manila_service_password: "secrete"
+manila_venv_tag: "testing"
+manila_service_port: 8786
+manila_service_proto: http
+manila_service_publicuri: "{{ manila_service_proto }}://{{ test_manila_api_host }}:{{ manila_service_port }}"
+manila_service_publicurl: "{{ manila_service_publicuri }}/v1/%(tenant_id)s"
+manila_service_adminuri: "{{ manila_service_proto }}://{{ test_manila_api_host }}:{{ manila_service_port }}"
+manila_service_adminurl: "{{ manila_service_adminuri }}/v1/%(tenant_id)s"
+manila_service_internaluri: "{{ manila_service_proto }}://{{ test_manila_api_host }}:{{ manila_service_port }}"
+manila_service_internalurl: "{{ manila_service_internaluri }}/v1/%(tenant_id)s"
+manila_service_v2_port: 8786
+manila_service_v2_proto: http
+manila_service_v2_publicuri: "{{ manila_service_v2_proto }}://{{ tst_manila_api_host }}:{{ manila_service_v2_port }}"
+manila_service_v2_publicurl: "{{ manila_service_publicuri }}/v2/%(tenant_id)s"
+manila_service_v2_adminuri: "{{ manila_service_v2_proto }}://{{ test_manila_api_host }}:{{ manila_service_v2_port }}"
+manila_service_v2_adminurl: "{{ manila_service_adminuri }}/v2/%(tenant_id)s"
+manila_service_v2_internaluri: "{{ manila_service_v2_proto }}://{{ test_manila_api_host }}:{{ manila_service_v2_port }}"
+manila_service_v2_internalurl: "{{ manila_service_internaluri }}/v2/%(tenant_id)s"
+manila_protocols:
+  - NFS
+manila_backends:
+  lvm:
+    share_backend_name: LVM
+    share_driver: manila.share.drivers.lvm.LVMShareDriver
+    driver_handles_share_servers: False
+    lvm_share_volume_group: manila-shares
+    lvm_share_export_ip: "{{ test_manila_share_host }}"
+
 # Swift specific settings
 swift_oslomsg_notify_password: "{{ oslomsg_notify_password }}"
 swift_container_mysql_password: "SuperSecrete"
@@ -365,6 +404,7 @@ tempest_service_available_cinder: "{{ ((groups['cinder_all'] is defined) and (gr
 tempest_service_available_glance: "{{ ((groups['glance_all'] is defined) and (groups['glance_all'] | length > 0)) }}"
 tempest_service_available_heat: "{{ ((groups['heat_all'] is defined) and (groups['heat_all'] | length > 0)) }}"
 tempest_service_available_horizon: "{{ ((groups['horizon_all'] is defined) and (groups['horizon_all'] | length > 0)) }}"
+tempest_service_available_manila: "{{ ((groups['manila_all'] is defined) and (groups['manila_all'] | length > 0)) }}"
 tempest_service_available_neutron: "{{ ((groups['neutron_all'] is defined) and (groups['neutron_all'] | length > 0)) }}"
 tempest_service_available_nova: "{{ ((groups['nova_all'] is defined) and (groups['nova_all'] | length > 0)) }}"
 tempest_service_available_swift: "{{ ((groups['swift_all'] is defined) and (groups['swift_all'] | length > 0)) }}"
@@ -384,6 +424,7 @@ glance_api_threads: 2
 heat_api_threads: 2
 horizon_wsgi_threads: 2
 keystone_wsgi_processes: 2
+manila_osapi_share_workers: 2
 neutron_api_workers: 2
 neutron_metadata_workers: 1
 neutron_rpc_workers: 1
@@ -396,6 +437,7 @@ swift_object_server_workers: 2
 swift_proxy_server_workers: 2
 glance_wsgi_processes: 2
 cinder_wsgi_processes: 2
+manila_wsgi_processes: 2
 neutron_wsgi_processes: 2
 swift_wsgi_processes: 2
 heat_wsgi_processes: 2
